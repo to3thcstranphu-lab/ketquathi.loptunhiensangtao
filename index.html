@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Điểm Thi lớp 12C7 - THPT Sông Lô</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #2563eb;
+        }
+        .toggle-checkbox:checked + .toggle-track {
+            background-color: #2563eb;
+        }
+        .toggle-checkbox:checked + .toggle-track .toggle-dot {
+            transform: translateX(1.5rem);
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 font-sans flex flex-col antialiased">
+
+    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-700 p-2.5 rounded-xl shadow-inner text-indigo-200">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight">Hệ Tống Quản Lý Lớp 12C7 - Trường THPT Sông Lô</h1>
+                    <p class="text-xs text-indigo-300">Dữ liệu dựa trên thông tin từ thủ khoa đầu ra trường THPT Sông Lô</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3 flex-wrap">
+                <!-- Ranking Pill Toggle Switch -->
+                <div class="flex items-center bg-indigo-950 px-2.5 py-1 rounded-full border border-indigo-700 shadow-inner">
+                    <span class="text-xs font-medium text-indigo-200 mr-2">Xếp Hạng:</span>
+                    <label for="rankingToggle" class="flex items-center cursor-pointer select-none">
+                        <div class="relative">
+                            <input type="checkbox" id="rankingToggle" class="sr-only toggle-checkbox" onchange="toggleRanking(this)">
+                            <div class="toggle-track block bg-indigo-800 w-11 h-5 rounded-full transition-colors duration-300 relative">
+                                <div class="toggle-dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm"></div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Export & Source Buttons -->
+                <button onclick="openSourceModal()" class="bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center shadow-sm">
+                    <i class="fa-solid fa-book-open mr-1.5"></i> Nguồn Tổ Hợp
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 space-y-3">
+        
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+            <div class="bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-500">Tổng Thí Sinh</span>
+                <span id="statTotal" class="text-lg font-bold text-indigo-900">45</span>
+            </div>
+            <div class="bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-500">Điểm Cao Nhất</span>
+                <span id="statMaxTotal" class="text-lg font-bold text-emerald-600">33.75</span>
+            </div>
+            <div class="bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-500">Điểm Thấp Nhất</span>
+                <span id="statMinTotal" class="text-lg font-bold text-rose-600">23.6</span>
+            </div>
+            <div class="bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between col-span-2 sm:col-span-1">
+                <span class="text-xs font-medium text-slate-500">Tổng Điểm Trung Bình</span>
+                <span id="statAvgScore" class="text-lg font-bold text-blue-600">7.21</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-3 flex-1">
+                <!-- Search Input -->
+                <div class="relative min-w-[200px] flex-1 sm:flex-none">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-search text-xs"></i>
+                    </span>
+                    <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Tìm theo tên hoặc STT..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                </div>
+            </div>
+
+            <!-- Combination Filter Dropdown -->
+            <div class="flex items-center space-x-2">
+                <label for="combinationFilter" class="text-xs font-semibold text-slate-600 whitespace-nowrap">Bộ Lọc Tổ Hợp:</label>
+                <select id="combinationFilter" onchange="applyFilters()" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium">
+                    <option value="ALL">-- Tất Cả Tổ Hợp (Mặc định Tổng) --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Current Ranking Banner Indicator (Made more compact) -->
+        <div id="rankingBanner" class="bg-indigo-50 border-l-4 border-indigo-600 px-2.5 py-1.5 rounded-r-lg text-xs text-indigo-900 font-medium flex justify-between items-center hidden">
+            <span id="rankingBannerText">Đang xếp hạng theo Tổng điểm gốc</span>
+            <span id="rankingCountBadge" class="bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full text-[11px] font-bold">45 thí sinh</span>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+            <div class="overflow-x-auto flex-1 max-h-[620px]">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 sticky top-0 z-10 text-slate-700 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
+                        <tr>
+                            <th id="sttHeader" class="py-3 px-3 text-center w-16">STT</th>
+                            <th class="py-3 px-4 min-w-[180px]">Họ Tên</th>
+                            <th class="py-3 px-3 text-center w-16">Giới Tính</th>
+                            <th class="py-3 px-3 text-right">Toán</th>
+                            <th class="py-3 px-3 text-right">Văn</th>
+                            <th class="py-3 px-3 text-right">Lý</th>
+                            <th class="py-3 px-3 text-right">Hóa</th>
+                            <th class="py-3 px-3 text-right">Sinh</th>
+                            <th class="py-3 px-3 text-right">Sử</th>
+                            <th class="py-3 px-3 text-right">Tin</th>
+                            <th class="py-3 px-3 text-right">Anh</th>
+                            <th class="py-3 px-3 text-right font-bold text-indigo-900">Tổng Gốc</th>
+                            <th class="py-3 px-3 text-right text-slate-600">ĐTB</th>
+                            <th id="dynamicScoreHeader" class="py-3 px-4 text-right hidden text-emerald-700 font-bold">Điểm Tổ Hợp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody" class="divide-y divide-slate-200 text-sm">
+                        <!-- Dynamic rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center">
+                    <i class="fa-solid fa-table-cells text-indigo-600 mr-2"></i> Tra Cứu Nhanh
+                </h3>
+                <span class="text-xs text-slate-500"> Thông tin sẽ được hiển thị bên trên</span>
+            </div>
+            <div class="overflow-x-auto max-h-[300px]">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-50 sticky top-0 text-slate-600 uppercase font-semibold">
+                        <tr>
+                            <th class="py-2.5 px-3">Mã</th>
+                            <th class="py-2.5 px-3">Tên Tổ Hợp</th>
+                            <th class="py-2.5 px-3 text-center">Số Thí Sinh</th>
+                            <th class="py-2.5 px-3 text-right">Điểm Cao Nhất</th>
+                            <th class="py-2.5 px-3 text-center">Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matrixTableBody" class="divide-y divide-slate-100">
+                        <!-- Injected dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
+        <p>Hệ Thống Quản Lý Thí Sinh - Bản quyền thuộc @loptunhiensangtao</p>
+    </footer>
+
+    <div id="sourceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden">
+            <div class="bg-indigo-900 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-bold text-base"><i class="fa-solid fa-book-open mr-2"></i> Nguồn Dữ Liệu Tổ Hợp & Quy Tắc</h3>
+                <button onclick="closeSourceModal()" class="text-indigo-200 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto text-sm">
+                <div class="bg-blue-50 border-l-4 border-blue-600 p-3 rounded-r-xl text-blue-900 text-xs">
+                    <p class="font-bold">Cập nhật theo chương trình Giáo dục phổ thông 2018:</p>
+                    <p class="mt-1">Thông tin lấy các tổ hợp mới từ cổng Thông tin điện tử.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 uppercase">
+                            <tr>
+                                <th class="py-2.5 px-3">Mã Tổ Hợp</th>
+                                <th class="py-2.5 px-3">Tên 3 Môn Thành Phần</th>
+                                <th class="py-2.5 px-3">Nguồn Xác Minh</th>
+                                <th class="py-2.5 px-3">Ngày Cập Nhật</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sourceTableBody" class="divide-y divide-slate-200">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="closeSourceModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Đã Hiểu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <script>
+        // MASTER COMBINATION DATABASE WITH 2025/2026 SOURCES
+        const combinationsDB = [
+            { code: "A00", name: "Toán + Vật lí + Hóa học", subjects: ["TOAN", "LI", "HOA"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "A01", name: "Toán + Vật lí + Tiếng Anh", subjects: ["TOAN", "LI", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "A02", name: "Toán + Vật lí + Sinh học", subjects: ["TOAN", "LI", "SINH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "A03", name: "Toán + Vật lí + Lịch sử", subjects: ["TOAN", "LI", "SU"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "B00", name: "Toán + Hóa học + Sinh học", subjects: ["TOAN", "HOA", "SINH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "B01", name: "Toán + Lịch sử + Sinh học", subjects: ["TOAN", "SU", "SINH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "B03", name: "Toán + Ngữ văn + Sinh học", subjects: ["TOAN", "VAN", "SINH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "B08", name: "Toán + Sinh học + Tiếng Anh", subjects: ["TOAN", "SINH", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C01", name: "Ngữ văn + Toán + Vật lí", subjects: ["VAN", "TOAN", "LI"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C02", name: "Ngữ văn + Toán + Hóa học", subjects: ["VAN", "TOAN", "HOA"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C03", name: "Ngữ văn + Toán + Lịch sử", subjects: ["VAN", "TOAN", "SU"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C05", name: "Ngữ văn + Vật lí + Hóa học", subjects: ["VAN", "LI", "HOA"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C06", name: "Ngữ văn + Vật lí + Sinh học", subjects: ["VAN", "LI", "SINH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C07", name: "Ngữ văn + Vật lí + Lịch sử", subjects: ["VAN", "LI", "SU"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C08", name: "Ngữ văn + Hóa học + Sinh học", subjects: ["VAN", "HOA", "SINH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C10", name: "Ngữ văn + Hóa học + Lịch sử", subjects: ["VAN", "HOA", "SU"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "C12", name: "Ngữ văn + Sinh học + Lịch sử", subjects: ["VAN", "SINH", "SU"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "D01", name: "Ngữ văn + Toán + Tiếng Anh", subjects: ["VAN", "TOAN", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "D07", name: "Toán + Hóa học + Tiếng Anh", subjects: ["TOAN", "HOA", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "D08", name: "Toán + Sinh học + Tiếng Anh", subjects: ["TOAN", "SINH", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "D09", name: "Toán + Lịch sử + Tiếng Anh", subjects: ["TOAN", "SU", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "D11", name: "Ngữ văn + Vật lí + Tiếng Anh", subjects: ["VAN", "LI", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "D12", name: "Ngữ văn + Hóa học + Tiếng Anh", subjects: ["VAN", "HOA", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "D13", name: "Ngữ văn + Sinh học + Tiếng Anh", subjects: ["VAN", "SINH", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            { code: "D14", name: "Ngữ văn + Lịch sử + Tiếng Anh", subjects: ["VAN", "SU", "ANH"], source: "Bộ GD&ĐT / Đề án tuyển sinh chính thức", verifiedDate: "2025-05-01" },
+            // 2025/2026 Tin học Combinations (X-series)
+            { code: "X02", name: "Toán + Ngữ văn + Tin học", subjects: ["TOAN", "VAN", "TIN"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" },
+            { code: "X06", name: "Toán + Vật lí + Tin học", subjects: ["TOAN", "LI", "TIN"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" },
+            { code: "X10", name: "Toán + Hóa học + Tin học", subjects: ["TOAN", "HOA", "TIN"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" },
+            { code: "X14", name: "Toán + Sinh học + Tin học", subjects: ["TOAN", "SINH", "TIN"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" },
+            { code: "X18", name: "Toán + Lịch sử + Tin học", subjects: ["TOAN", "SU", "TIN"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" },
+            { code: "X26", name: "Toán + Tin học + Tiếng Anh", subjects: ["TOAN", "TIN", "ANH"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" },
+            { code: "X59", name: "Ngữ văn + Vật lí + Tin học", subjects: ["VAN", "LI", "TIN"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" },
+            { code: "X63", name: "Ngữ văn + Hóa học + Tin học", subjects: ["VAN", "HOA", "TIN"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" },
+            { code: "X67", name: "Ngữ văn + Sinh học + Tin học", subjects: ["VAN", "SINH", "TIN"], source: "Cổng thông tin tuyển sinh Đại học 2025+", verifiedDate: "2025-05-01" }
+        ];
+
+        // RAW ORIGINAL DATA FOR 45 STUDENTS
+        const initialStudentsData = [
+            { stt: 1, name: "ĐỖ HÀ ANH", gender: "Nữ", scores: { TOAN: 9, VAN: 7.75, LI: 6, HOA: 7, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 29.75, originalAvg: 7.4 },
+            { stt: 2, name: "LƯƠNG GIA BẢO", gender: "Nam", scores: { TOAN: 8.5, VAN: 8, LI: 6.75, HOA: null, SINH: null, SU: null, TIN: null, ANH: 8.75 }, originalTotal: 32, originalAvg: 8.0 },
+            { stt: 3, name: "TRẦN VIỆT CƯỜNG", gender: "Nam", scores: { TOAN: 9, VAN: 7.75, LI: 6.25, HOA: 7, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 30, originalAvg: 7.5 },
+            { stt: 4, name: "NGUYỄN THÙY CHÂM", gender: "Nữ", scores: { TOAN: 5.75, VAN: 8, LI: null, HOA: null, SINH: null, SU: 8.75, TIN: 5.35, ANH: null }, originalTotal: 27.85, originalAvg: 7.0 },
+            { stt: 5, name: "ĐÀO LINH CHI", gender: "Nữ", scores: { TOAN: 6, VAN: 8.25, LI: null, HOA: null, SINH: null, SU: 9, TIN: 3.85, ANH: null }, originalTotal: 27.1, originalAvg: 6.8 },
+            { stt: 6, name: "ĐỖ HÀ CHI", gender: "Nữ", scores: { TOAN: 8, VAN: 7.75, LI: 7, HOA: null, SINH: null, SU: null, TIN: null, ANH: 8 }, originalTotal: 30.75, originalAvg: 7.7 },
+            { stt: 7, name: "LÊ KHÁNH CHI", gender: "Nữ", scores: { TOAN: 9, VAN: 7.25, LI: 6, HOA: null, SINH: null, SU: null, TIN: null, ANH: 6 }, originalTotal: 28.25, originalAvg: 7.1 },
+            { stt: 8, name: "HÀ QUỲNH CHI", gender: "Nữ", scores: { TOAN: 9, VAN: 6.25, LI: null, HOA: 8.25, SINH: null, SU: null, TIN: null, ANH: 6.25 }, originalTotal: 29.75, originalAvg: 7.4 },
+            { stt: 9, name: "HOÀNG NGỌC DIỆP", gender: "Nữ", scores: { TOAN: 9, VAN: 7.75, LI: 6.75, HOA: 7.75, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 31.25, originalAvg: 7.8 },
+            { stt: 10, name: "ĐẶNG PHƯƠNG DUNG", gender: "Nữ", scores: { TOAN: 9, VAN: 7.75, LI: 5.5, HOA: 7.5, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 29.75, originalAvg: 7.4 },
+            { stt: 11, name: "NGUYỄN PHƯƠNG DUNG", gender: "Nữ", scores: { TOAN: 8.25, VAN: 7, LI: null, HOA: 8.5, SINH: null, SU: null, TIN: null, ANH: 3.25 }, originalTotal: 27, originalAvg: 6.8 },
+            { stt: 12, name: "ĐÀO HƯƠNG GIANG", gender: "Nữ", scores: { TOAN: 9, VAN: 7.75, LI: 8.25, HOA: 8.5, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 33.5, originalAvg: 8.4 },
+            { stt: 13, name: "KHỔNG LINH GIANG", gender: "Nữ", scores: { TOAN: 6.25, VAN: 5.5, LI: null, HOA: 6, SINH: 5.85, SU: null, TIN: null, ANH: null }, originalTotal: 23.6, originalAvg: 5.9 },
+            { stt: 14, name: "LÊ MINH HIẾU", gender: "Nam", scores: { TOAN: 8.75, VAN: 6.5, LI: 6.5, HOA: 8.25, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 30, originalAvg: 7.5 },
+            { stt: 15, name: "NGUYỄN MẠNH HÙNG", gender: "Nam", scores: { TOAN: 5.5, VAN: 7, LI: 7, HOA: null, SINH: null, SU: 6.25, TIN: null, ANH: null }, originalTotal: 25.75, originalAvg: 6.4 },
+            { stt: 16, name: "LÊ XUÂN HUY", gender: "Nam", scores: { TOAN: 8.75, VAN: 5, LI: 6.5, HOA: 6.85, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 27.1, originalAvg: 6.8 },
+            { stt: 17, name: "NGUYỄN KHÁNH HUY", gender: "Nam", scores: { TOAN: 7.75, VAN: 6.75, LI: 6.25, HOA: null, SINH: null, SU: 7.25, TIN: null, ANH: null }, originalTotal: 28, originalAvg: 7.0 },
+            { stt: 18, name: "CHU NGỌC HUYỀN", gender: "Nữ", scores: { TOAN: 8, VAN: 7.5, LI: 7.25, HOA: null, SINH: null, SU: null, TIN: null, ANH: 8 }, originalTotal: 30.75, originalAvg: 7.7 },
+            { stt: 19, name: "ĐẶNG MAI HUYỀN", gender: "Nữ", scores: { TOAN: 9, VAN: 6.25, LI: 5.75, HOA: 8, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 29, originalAvg: 7.3 },
+            { stt: 20, name: "LÊ THU HUYỀN", gender: "Nữ", scores: { TOAN: 9.25, VAN: 5.25, LI: 5, HOA: 7.6, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 27.1, originalAvg: 6.8 },
+            { stt: 21, name: "NGUYỄN DUY HƯNG", gender: "Nam", scores: { TOAN: 9.5, VAN: 6.75, LI: 7, HOA: 7.25, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 30.5, originalAvg: 7.6 },
+            { stt: 22, name: "NGUYỄN NGỌC KHÁNH", gender: "Nữ", scores: { TOAN: 7, VAN: 8, LI: null, HOA: null, SINH: null, SU: 8.75, TIN: 6.75, ANH: null }, originalTotal: 30.5, originalAvg: 7.6 },
+            { stt: 23, name: "ĐOÀN TUẤN KIỆT", gender: "Nam", scores: { TOAN: 9, VAN: 5.25, LI: 6.25, HOA: 7.5, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 28, originalAvg: 7.0 },
+            { stt: 24, name: "PHẠM THÁI NGỌC LINH", gender: "Nữ", scores: { TOAN: 8.5, VAN: 7.5, LI: null, HOA: 5.35, SINH: null, SU: null, TIN: null, ANH: 5 }, originalTotal: 26.35, originalAvg: 6.6 },
+            { stt: 25, name: "NGUYỄN THÀNH LUÂN", gender: "Nam", scores: { TOAN: 9, VAN: 6.25, LI: 6.75, HOA: null, SINH: null, SU: null, TIN: 8, ANH: null }, originalTotal: 30, originalAvg: 7.5 },
+            { stt: 26, name: "MAI KHÁNH LY", gender: "Nữ", scores: { TOAN: 9.5, VAN: 7.5, LI: 5.75, HOA: 7.5, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 30.25, originalAvg: 7.6 },
+            { stt: 27, name: "NGUYỄN HOÀNG MAI", gender: "Nữ", scores: { TOAN: 6.75, VAN: 7, LI: 6.25, HOA: null, SINH: null, SU: 7, TIN: null, ANH: null }, originalTotal: 27, originalAvg: 6.8 },
+            { stt: 28, name: "NGUYỄN HÀ MY", gender: "Nữ", scores: { TOAN: 8.5, VAN: 6.75, LI: 6, HOA: null, SINH: null, SU: null, TIN: null, ANH: 5.5 }, originalTotal: 26.75, originalAvg: 6.7 },
+            { stt: 29, name: "NGUYỄN HIẾU NGÂN", gender: "Nữ", scores: { TOAN: 9, VAN: 8, LI: 8, HOA: 8.5, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 33.5, originalAvg: 8.4 },
+            { stt: 30, name: "NGUYỄN YẾN NHI", gender: "Nữ", scores: { TOAN: 8.75, VAN: 6.5, LI: 7.25, HOA: 8.25, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 30.75, originalAvg: 7.7 },
+            { stt: 31, name: "TRIỆU YẾN NHI", gender: "Nữ", scores: { TOAN: 9.5, VAN: 6.75, LI: 6.5, HOA: 7.5, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 30.25, originalAvg: 7.6 },
+            { stt: 32, name: "HÀ PHẠM TÂM NHƯ", gender: "Nữ", scores: { TOAN: 7.75, VAN: 7.75, LI: null, HOA: 6.6, SINH: 6.35, SU: null, TIN: null, ANH: null }, originalTotal: 28.45, originalAvg: 7.1 },
+            { stt: 33, name: "NGÔ GIA PHONG", gender: "Nam", scores: { TOAN: 8.75, VAN: 5.5, LI: 6.25, HOA: null, SINH: null, SU: null, TIN: null, ANH: 3.75 }, originalTotal: 24.25, originalAvg: 6.1 },
+            { stt: 34, name: "NGUYỄN HOÀNG QUÂN", gender: "Nam", scores: { TOAN: 7.75, VAN: 7.25, LI: 7.5, HOA: 7.75, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 30.25, originalAvg: 7.6 },
+            { stt: 35, name: "HOÀNG HỒNG QUYÊN", gender: "Nữ", scores: { TOAN: 8.75, VAN: 7.25, LI: 5.25, HOA: 7.5, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 28.75, originalAvg: 7.2 },
+            { stt: 36, name: "HOÀNG TRUNG THÀNH", gender: "Nam", scores: { TOAN: 7.5, VAN: 7.75, LI: 6.5, HOA: null, SINH: null, SU: 9, TIN: null, ANH: null }, originalTotal: 30.75, originalAvg: 7.7 },
+            { stt: 37, name: "BÙI PHƯƠNG THẢO", gender: "Nữ", scores: { TOAN: 8.75, VAN: 7.25, LI: 5.5, HOA: 6.85, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 28.35, originalAvg: 7.1 },
+            { stt: 38, name: "HOÀNG THỊ TRÀ", gender: "Nữ", scores: { TOAN: 9, VAN: 6.75, LI: null, HOA: 9.25, SINH: 8.75, SU: null, TIN: null, ANH: null }, originalTotal: 33.75, originalAvg: 8.4 },
+            { stt: 39, name: "NGUYỄN THÙY TRANG", gender: "Nữ", scores: { TOAN: 8.5, VAN: 8.25, LI: null, HOA: null, SINH: null, SU: 5.75, TIN: 6, ANH: null }, originalTotal: 28.5, originalAvg: 7.1 },
+            { stt: 40, name: "VI ANH TÚ", gender: "Nam", scores: { TOAN: 7.25, VAN: 7, LI: 7.25, HOA: 7.75, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 29.25, originalAvg: 7.3 },
+            { stt: 41, name: "ĐỖ ANH TUẤN", gender: "Nam", scores: { TOAN: 7.5, VAN: 6, LI: 3.85, HOA: 7.75, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 25.1, originalAvg: 6.3 },
+            { stt: 42, name: "NGUYỄN ANH TUẤN", gender: "Nam", scores: { TOAN: 9, VAN: 6, LI: 6.25, HOA: 7.35, SINH: null, SU: null, TIN: null, ANH: null }, originalTotal: 28.6, originalAvg: 7.2 },
+            { stt: 43, name: "LƯƠNG TRIỀU VĨ", gender: "Nam", scores: { TOAN: 7.25, VAN: 7, LI: null, HOA: null, SINH: null, SU: 8.75, TIN: null, ANH: 8 }, originalTotal: 31, originalAvg: 7.8 },
+            { stt: 44, name: "NGUYỄN TRẦN NGỌC VIỆT", gender: "Nam", scores: { TOAN: 8, VAN: 5.25, LI: 6.5, HOA: null, SINH: null, SU: null, TIN: 9, ANH: null }, originalTotal: 28.75, originalAvg: 7.2 },
+            { stt: 45, name: "TRẦN HÀ VY", gender: "Nữ", scores: { TOAN: 8.25, VAN: 7.25, LI: null, HOA: 7, SINH: 7.35, SU: null, TIN: null, ANH: null }, originalTotal: 29.85, originalAvg: 7.5 }
+        ];
+
+        // APPLICATION STATE
+        let students = [];
+        let isRankingOn = false;
+        let currentCombinationFilter = 'ALL';
+        let currentSearchQuery = '';
+
+        // INITIALIZE ON WINDOW LOAD
+        window.onload = function() {
+            loadData();
+            populateCombinationDropdown();
+            renderTable();
+            renderMatrixTable();
+        };
+
+        // LOCALSTORAGE MANAGEMENT
+        function loadData() {
+            const saved = localStorage.getItem('student_ranking_2025');
+            if (saved) {
+                try {
+                    students = JSON.parse(saved);
+                } catch (e) {
+                    students = JSON.parse(JSON.stringify(initialStudentsData));
+                }
+            } else {
+                students = JSON.parse(JSON.stringify(initialStudentsData));
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('student_ranking_2025', JSON.stringify(students));
+        }
+
+        // POPULATE COMBINATION DROPDOWN
+        function populateCombinationDropdown() {
+            const select = document.getElementById('combinationFilter');
+            select.innerHTML = '<option value="ALL"> Tất Cả Tổ Hợp (Mặc định) </option>';
+            
+            combinationsDB.forEach(combo => {
+                const opt = document.createElement('option');
+                opt.value = combo.code;
+                opt.textContent = `${combo.code} (${combo.name})`;
+                select.appendChild(opt);
+            });
+        }
+
+        // TOGGLE RANKING SWITCH
+        function toggleRanking(checkbox) {
+            isRankingOn = checkbox.checked;
+            if (isRankingOn) {
+                showToast("Đã bật chế độ xếp hạng động theo bộ lọc!", "success");
+            } else {
+                showToast("Đã tắt xếp hạng, hiển thị theo thứ tự STT gốc.", "info");
+            }
+            renderTable();
+        }
+
+        // FILTER AND SEARCH HANDLER
+        function applyFilters() {
+            currentSearchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+            currentCombinationFilter = document.getElementById('combinationFilter').value;
+            renderTable();
+        }
+
+        // GET ELIGIBLE COMBINATIONS FOR A STUDENT
+        function getEligibleCombinations(student) {
+            let eligible = [];
+            combinationsDB.forEach(combo => {
+                const hasAllSubjects = combo.subjects.every(subj => {
+                    const score = student.scores[subj];
+                    return score !== null && score !== undefined && score !== "" && !isNaN(score);
+                });
+                if (hasAllSubjects) {
+                    let scoreSum = combo.subjects.reduce((sum, subj) => sum + Number(student.scores[subj]), 0);
+                    scoreSum = Math.round(scoreSum * 100) / 100;
+                    eligible.push({
+                        code: combo.code,
+                        name: combo.name,
+                        subjects: combo.subjects,
+                        score: scoreSum
+                    });
+                }
+            });
+            return eligible;
+        }
+
+        // RENDER TABLE FUNCTION
+        function renderTable() {
+            const tbody = document.getElementById('studentTableBody');
+            const dynamicHeader = document.getElementById('dynamicScoreHeader');
+            const banner = document.getElementById('rankingBanner');
+            const bannerText = document.getElementById('rankingBannerText');
+            const rankingCountBadge = document.getElementById('rankingCountBadge');
+            
+            tbody.innerHTML = '';
+
+            let filtered = students.filter(s => {
+                const matchName = s.name.toLowerCase().includes(currentSearchQuery);
+                const matchStt = s.stt.toString() === currentSearchQuery;
+                return currentSearchQuery === '' || matchName || matchStt;
+            });
+
+            let activeComboObj = null;
+            if (currentCombinationFilter !== 'ALL') {
+                activeComboObj = combinationsDB.find(c => c.code === currentCombinationFilter);
+                filtered = filtered.filter(s => {
+                    const eligibleList = getEligibleCombinations(s);
+                    return eligibleList.some(e => e.code === currentCombinationFilter);
+                });
+                dynamicHeader.classList.remove('hidden');
+                dynamicHeader.textContent = `Điểm ${currentCombinationFilter}`;
+            } else {
+                dynamicHeader.classList.add('hidden');
+            }
+
+            if (isRankingOn) {
+                filtered.sort((a, b) => {
+                    let scoreA, scoreB;
+                    if (currentCombinationFilter !== 'ALL') {
+                        const eligA = getEligibleCombinations(a).find(e => e.code === currentCombinationFilter);
+                        const eligB = getEligibleCombinations(b).find(e => e.code === currentCombinationFilter);
+                        scoreA = eligA ? eligA.score : -1;
+                        scoreB = eligB ? eligB.score : -1;
+                    } else {
+                        scoreA = a.originalTotal;
+                        scoreB = b.originalTotal;
+                    }
+
+                    if (scoreB !== scoreA) return scoreB - scoreA;
+                    if (b.originalAvg !== a.originalAvg) return b.originalAvg - a.originalAvg;
+                    if (b.originalTotal !== a.originalTotal) return b.originalTotal - a.originalTotal;
+                    return a.stt - b.stt;
+                });
+
+                banner.classList.remove('hidden');
+                if (currentCombinationFilter !== 'ALL') {
+                    bannerText.innerHTML = `Đang xếp hạng theo <span class="font-bold text-indigo-900">${currentCombinationFilter} — ${activeComboObj ? activeComboObj.name : ''}</span>`;
+                } else {
+                    bannerText.innerHTML = `Đang xếp hạng theo <span class="font-bold text-indigo-900">Tổng điểm gốc</span>`;
+                }
+                rankingCountBadge.textContent = `${filtered.length} thí sinh`;
+            } else {
+                // Khi tắt xếp hạng nhưng chọn tổ hợp mới hoặc tìm kiếm, sắp xếp lại theo thứ tự STT tăng dần để đảm bảo STT hiển thị 1, 2, 3... gọn gàng
+                filtered.sort((a, b) => a.stt - b.stt);
+
+                if (currentCombinationFilter !== 'ALL') {
+                    banner.classList.remove('hidden');
+                    bannerText.innerHTML = `Lọc theo tổ hợp <span class="font-bold text-indigo-900">${currentCombinationFilter}</span> (Đang hiển thị thứ tự gốc)`;
+                    rankingCountBadge.textContent = `${filtered.length} thí sinh`;
+                } else {
+                    banner.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('statTotal').textContent = students.length;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="15" class="text-center py-8 text-slate-400 font-medium">Không tìm thấy thí sinh nào phù hợp với bộ lọc.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach((s, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-indigo-50/50 transition border-b border-slate-100 group";
+
+                // STT luôn chạy từ 1, 2, 3... tương ứng với vị trí hiển thị hiện tại trong bảng kết quả lọc
+                let displayStt = index + 1;
+                let rankBadge = `<span class="font-medium text-slate-600 text-xs">${displayStt}</span>`;
+                
+                if (isRankingOn) {
+                    if (displayStt === 1) {
+                        rankBadge = `<span class="bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded-full text-xs inline-flex items-center justify-center shadow-xs"><i class="fa-solid fa-medal mr-1"></i>1</span>`;
+                    } else if (displayStt === 2) {
+                        rankBadge = `<span class="bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded-full text-xs inline-flex items-center justify-center shadow-xs"><i class="fa-solid fa-medal mr-1"></i>2</span>`;
+                    } else if (displayStt === 3) {
+                        rankBadge = `<span class="bg-amber-700/10 text-amber-800 font-bold px-2 py-0.5 rounded-full text-xs inline-flex items-center justify-center shadow-xs"><i class="fa-solid fa-medal mr-1"></i>3</span>`;
+                    } else {
+                        rankBadge = `<span class="font-bold text-indigo-900 text-xs">${displayStt}</span>`;
+                    }
+                }
+
+                const formatScore = (val) => val !== null && val !== undefined ? val : '<span class="text-slate-300">-</span>';
+
+                let comboScoreCellHtml = '';
+                if (currentCombinationFilter !== 'ALL') {
+                    const elig = getEligibleCombinations(s).find(e => e.code === currentCombinationFilter);
+                    comboScoreCellHtml = `<td class="py-3 px-4 text-right font-bold text-emerald-600 bg-emerald-50/30">${elig ? elig.score.toFixed(2) : '<span class="text-rose-400 text-xs font-normal">Không đủ ĐK</span>'}</td>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 text-center">${rankBadge}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-900">${s.name}</td>
+                    <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-md text-xs font-medium ${s.gender === 'Nam' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'}">${s.gender}</span></td>
+                    <td class="py-3 px-3 text-right font-mono text-xs">${formatScore(s.scores.TOAN)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs">${formatScore(s.scores.VAN)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs">${formatScore(s.scores.LI)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs">${formatScore(s.scores.HOA)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs">${formatScore(s.scores.SINH)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs">${formatScore(s.scores.SU)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs">${formatScore(s.scores.TIN)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs">${formatScore(s.scores.ANH)}</td>
+                    <td class="py-3 px-3 text-right font-bold text-indigo-900 font-mono text-xs">${s.originalTotal}</td>
+                    <td class="py-3 px-3 text-right text-slate-600 font-mono text-xs">${s.originalAvg}</td>
+                    ${comboScoreCellHtml}
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // RENDER COMBINATION MATRIX TABLE
+        function renderMatrixTable() {
+            const matrixBody = document.getElementById('matrixTableBody');
+            matrixBody.innerHTML = '';
+
+            combinationsDB.forEach(combo => {
+                let eligibleCount = 0;
+                let maxScore = 0;
+
+                students.forEach(s => {
+                    const hasAll = combo.subjects.every(subj => s.scores[subj] !== null && s.scores[subj] !== undefined && s.scores[subj] !== "");
+                    if (hasAll) {
+                        eligibleCount++;
+                        let sum = combo.subjects.reduce((acc, subj) => acc + Number(s.scores[subj]), 0);
+                        if (sum > maxScore) maxScore = sum;
+                    }
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-bold text-indigo-900">${combo.code}</td>
+                    <td class="py-2.5 px-3 font-medium text-slate-800">${combo.name}</td>
+                    <td class="py-2.5 px-3 text-center"><span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-md font-bold text-xs">${eligibleCount} thí sinh</span></td>
+                    <td class="py-2.5 px-3 text-right font-bold text-emerald-600 font-mono">${eligibleCount > 0 ? maxScore.toFixed(2) : '-'}</td>
+                    <td class="py-2.5 px-3 text-center">
+                        <button onclick="filterByComboFromMatrix('${combo.code}')" class="bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 px-2.5 py-1 rounded-md text-xs font-medium transition shadow-xs">
+                            Lọc nhanh
+                        </button>
+                    </td>
+                `;
+                matrixBody.appendChild(tr);
+            });
+        }
+
+        function filterByComboFromMatrix(code) {
+            document.getElementById('combinationFilter').value = code;
+            applyFilters();
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+            showToast(`Đã lọc nhanh theo tổ hợp: ${code}`, "success");
+        }
+
+        // SOURCE MODAL
+        function openSourceModal() {
+            const tbody = document.getElementById('sourceTableBody');
+            tbody.innerHTML = '';
+            combinationsDB.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="py-2 px-3 font-bold text-indigo-900">${c.code}</td>
+                    <td class="py-2 px-3 font-medium text-slate-800">${c.name}</td>
+                    <td class="py-2 px-3 text-slate-600">${c.source}</td>
+                    <td class="py-2 px-3 text-slate-500 font-mono text-xs">${c.verifiedDate}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('sourceModal').classList.remove('hidden');
+        }
+
+        function closeSourceModal() {
+            document.getElementById('sourceModal').classList.add('hidden');
+        }
+
+        // TOAST NOTIFICATION SYSTEM (Replaces previous toasts immediately)
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            
+            // Clear any existing toasts immediately so they don't stack up
+            container.innerHTML = '';
+
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-emerald-600 text-white';
+            let icon = 'fa-circle-check';
+            if (type === 'info') {
+                bgClass = 'bg-indigo-600 text-white';
+                icon = 'fa-circle-info';
+            } else if (type === 'error') {
+                bgClass = 'bg-rose-600 text-white';
+                icon = 'fa-circle-exclamation';
+            }
+
+            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-lg flex items-center space-x-3 text-xs sm:text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
